@@ -21,11 +21,10 @@
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/module.h>
-#include <linux/of.h>
+#include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/pm_wakeirq.h>
 #include <linux/pm_wakeup.h>
-#include <linux/property.h>
 #include <linux/regulator/consumer.h>
 #include <linux/reset.h>
 #include <linux/slab.h>
@@ -82,6 +81,12 @@ static const struct lradc_variant r_lradc_variant_a83t = {
 };
 
 static const struct lradc_variant lradc_variant_r329 = {
+	.divisor_numerator = 3,
+	.divisor_denominator = 4,
+	.has_clock_reset = true,
+};
+
+static const struct lradc_variant lradc_variant_h616 = {
 	.divisor_numerator = 3,
 	.divisor_denominator = 4,
 	.has_clock_reset = true,
@@ -308,7 +313,8 @@ static int sun4i_lradc_probe(struct platform_device *pdev)
 
 	input_set_drvdata(lradc->input, lradc);
 
-	lradc->base = devm_platform_ioremap_resource(pdev, 0);
+	lradc->base = devm_ioremap_resource(dev,
+			      platform_get_resource(pdev, IORESOURCE_MEM, 0));
 	if (IS_ERR(lradc->base))
 		return PTR_ERR(lradc->base);
 
@@ -345,6 +351,8 @@ static const struct of_device_id sun4i_lradc_of_match[] = {
 		.data = &r_lradc_variant_a83t },
 	{ .compatible = "allwinner,sun50i-r329-lradc",
 		.data = &lradc_variant_r329 },
+	{ .compatible = "allwinner,sun50i-h616-lradc",
+		.data = &lradc_variant_h616 },
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, sun4i_lradc_of_match);
